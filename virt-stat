@@ -49,9 +49,6 @@ def read_kvm_counter(name):
 def print_counter(value, description):
   print("%15s      %s" % ("{:,}".format(value), description))
 
-print("  Virtualization stats")
-
-print("\n  Host\n")
 
 def parse_proc_stat():
   stat = dict()
@@ -62,7 +59,6 @@ def parse_proc_stat():
       stat[key] = tokens
   return stat
 
-stat = parse_proc_stat()
 
 def parse_proc_vmstat():
   stat = dict()
@@ -72,79 +68,86 @@ def parse_proc_vmstat():
       stat[tokens[0]] = tokens[1]
   return stat
 
-vmstat = parse_proc_vmstat()
+if __name__ == "__main__":
+  print("  Virtualization stats")
 
-for key in sorted(stat.keys()):
-  if key.startswith("cpu") and key != "cpu":
-    print_counter(int(stat[key][0]), "CPU user (%s)" % (key))
+  print("\n  Host\n")
 
-for key in sorted(stat.keys()):
-  if key.startswith("cpu") and key != "cpu":
-    print_counter(int(stat[key][1]), "CPU nice (%s)" % (key))
+  stat = parse_proc_stat()
 
-for key in sorted(stat.keys()):
-  if key.startswith("cpu") and key != "cpu":
-    print_counter(int(stat[key][2]), "CPU system (%s)" % (key))
+  vmstat = parse_proc_vmstat()
 
-for key in sorted(stat.keys()):
-  if key.startswith("cpu") and key != "cpu":
-    print_counter(int(stat[key][3]), "CPU idle (%s)" % (key))
+  for key in sorted(stat.keys()):
+    if key.startswith("cpu") and key != "cpu":
+      print_counter(int(stat[key][0]), "CPU user (%s)" % (key))
+  
+  for key in sorted(stat.keys()):
+    if key.startswith("cpu") and key != "cpu":
+      print_counter(int(stat[key][1]), "CPU nice (%s)" % (key))
+  
+  for key in sorted(stat.keys()):
+    if key.startswith("cpu") and key != "cpu":
+      print_counter(int(stat[key][2]), "CPU system (%s)" % (key))
+  
+  for key in sorted(stat.keys()):
+    if key.startswith("cpu") and key != "cpu":
+      print_counter(int(stat[key][3]), "CPU idle (%s)" % (key))
+  
+  for key in sorted(stat.keys()):
+    if key.startswith("cpu") and key != "cpu":
+      print_counter(int(stat[key][4]), "CPU iowait (%s)" % (key))
+  
+  print_counter(int(vmstat["pgfault"]), "Page faults")
+  print_counter(int(stat["intr"][0]), "Interrupts")
+  print_counter(int(stat["ctxt"][0]), "Context switches")
+  
+  def parse_proc_diskstats():
+    diskstats = dict()
+    with open('/proc/diskstats', 'r') as f:
+      for line in f:
+        tokens = line.split()
+        key = tokens[2]
+        diskstats[key] = tokens
+    return diskstats
+  
+  diskstats = parse_proc_diskstats()
+  
+  for key in sorted(diskstats.keys()):
+    diskstat = diskstats[key]
+    if diskstat[1] == "0":
+      print_counter(int(diskstat[5]), "I/O sectors read (%s)" % (key))
+  
+  for key in diskstats.keys():
+    diskstat = diskstats[key]
+    if diskstat[1] == "0":
+      print_counter(int(diskstat[9]), "I/O sectors written (%s)" % (key))
+  
+  def parse_proc_netstats():
+    netstats = dict()
+    with open('/proc/net/dev', 'r') as f:
+      for line in f:
+        tokens = line.split(':')
+        if (len(tokens) == 2):
+          key = tokens[0].strip()
+          netstats[key] = tokens[1].split()
+    return netstats
+  
+  netstats = parse_proc_netstats()
+  
+  for key in sorted(netstats.keys()):
+    netstat = netstats[key]
+    print_counter(int(netstat[0]), "RX bytes (%s)" % (key))
+  
+  for key in netstats.keys():
+    netstat = netstats[key]
+    print_counter(int(netstat[8]), "TX bytes (%s)" % (key))
+  
+  print("\n  KVM\n")
 
-for key in sorted(stat.keys()):
-  if key.startswith("cpu") and key != "cpu":
-    print_counter(int(stat[key][4]), "CPU iowait (%s)" % (key))
-
-print_counter(int(vmstat["pgfault"]), "Page faults")
-print_counter(int(stat["intr"][0]), "Interrupts")
-print_counter(int(stat["ctxt"][0]), "Context switches")
-
-def parse_proc_diskstats():
-  diskstats = dict()
-  with open('/proc/diskstats', 'r') as f:
-    for line in f:
-      tokens = line.split()
-      key = tokens[2]
-      diskstats[key] = tokens
-  return diskstats
-
-diskstats = parse_proc_diskstats()
-
-for key in sorted(diskstats.keys()):
-  diskstat = diskstats[key]
-  if diskstat[1] == "0":
-    print_counter(int(diskstat[5]), "I/O sectors read (%s)" % (key))
-
-for key in diskstats.keys():
-  diskstat = diskstats[key]
-  if diskstat[1] == "0":
-    print_counter(int(diskstat[9]), "I/O sectors written (%s)" % (key))
-
-def parse_proc_netstats():
-  netstats = dict()
-  with open('/proc/net/dev', 'r') as f:
-    for line in f:
-      tokens = line.split(':')
-      if (len(tokens) == 2):
-        key = tokens[0].strip()
-        netstats[key] = tokens[1].split()
-  return netstats
-
-netstats = parse_proc_netstats()
-
-for key in sorted(netstats.keys()):
-  netstat = netstats[key]
-  print_counter(int(netstat[0]), "RX bytes (%s)" % (key))
-
-for key in netstats.keys():
-  netstat = netstats[key]
-  print_counter(int(netstat[8]), "TX bytes (%s)" % (key))
-
-print("\n  KVM\n")
-
-for counter in KVM_COUNTERS:
-  name, description = counter
-  if (name):
-      value = read_kvm_counter(name)
-      print_counter(value, description)
-  else:
-      print("")
+  for counter in KVM_COUNTERS:
+    name, description = counter
+    if (name):
+        value = read_kvm_counter(name)
+        print_counter(value, description)
+    else:
+        print("")
