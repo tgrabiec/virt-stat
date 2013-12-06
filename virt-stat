@@ -47,7 +47,7 @@ def read_kvm_counter(name):
   return int(value)
 
 def print_counter(value, description):
-  print("%15d      %s" % (value, description))
+  print("%15s      %s" % ("{:,}".format(value), description))
 
 print("  Virtualization stats")
 
