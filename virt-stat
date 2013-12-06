@@ -83,6 +83,27 @@ print_counter(int(vmstat["pgfault"]), "Page faults")
 print_counter(int(stat["intr"][0]), "Interrupts")
 print_counter(int(stat["ctxt"][0]), "Context switches")
 
+def parse_proc_diskstats():
+  diskstats = dict()
+  with open('/proc/diskstats', 'r') as f:
+    for line in f:
+      tokens = line.split()
+      key = tokens[2]
+      diskstats[key] = tokens
+  return diskstats
+
+diskstats = parse_proc_diskstats()
+
+for key in sorted(diskstats.keys()):
+  diskstat = diskstats[key]
+  if diskstat[1] == "0":
+    print_counter(int(diskstat[5]), "I/O sectors read (%s)" % (key))
+
+for key in diskstats.keys():
+  diskstat = diskstats[key]
+  if diskstat[1] == "0":
+    print_counter(int(diskstat[9]), "I/O sectors written (%s)" % (key))
+
 print("\n  KVM\n")
 
 for counter in KVM_COUNTERS:
