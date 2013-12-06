@@ -14,5 +14,5 @@ support for gathering guest statistics is planned.
 ## Usage
 
 ```
-$ ./virt-stat | less
+$ ./virt-stat
 ```
