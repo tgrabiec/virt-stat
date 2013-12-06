@@ -74,6 +74,11 @@ def parse_proc_vmstat():
 
 vmstat = parse_proc_vmstat()
 
+print_counter(int(stat["cpu"][0]), "CPU (user)")
+print_counter(int(stat["cpu"][1]), "CPU (nice)")
+print_counter(int(stat["cpu"][2]), "CPU (system)")
+print_counter(int(stat["cpu"][3]), "CPU (idle)")
+print_counter(int(stat["cpu"][4]), "CPU (iowait)")
 print_counter(int(vmstat["pgfault"]), "Page faults")
 print_counter(int(stat["intr"][0]), "Interrupts")
 print_counter(int(stat["ctxt"][0]), "Context switches")
