@@ -1,0 +1,89 @@
+#!/usr/bin/env python
+
+KVM_COUNTERS = [
+  ("exits",               "VM exits"),
+  ("irq_exits",           "VM exits (external interrupt)"),
+  ("irq_window",          "VM exits (interrupt window"),
+  ("request_irq",         "VM exits (interrupt window request)"),
+  ("io_exits",            "VM exits (PIO)"),
+  ("mmio_exits",          "VM exits (MMIO)"),
+  ("signal_exits",        "VM exits (host signal)"),
+  ("halt_exits",          "VM exits (halt)"),
+  ("halt_wakeup",         "Halt wakeups"),
+  ("",                    ""),
+  ("irq_injections",      "IRQ injections"),
+  ("nmi_injections",      "NMI injections"),
+  ("nmi_window",          "NMI window"),
+  ("",                    ""),
+  ("mmu_cache_miss",      "MMU cache misses"),
+  ("mmu_flooded",         "MMU floods"),
+  ("mmu_pde_zapped",      "MMU PDE zaps"),
+  ("mmu_pte_updated",     "MMU PTE updates"),
+  ("mmu_pte_write",       "MMU PTE writes"),
+  ("mmu_recycled",        "MMU recycles"),
+  ("mmu_shadow_zapped",   "MMU shadow zaps"),
+  ("mmu_unsync",          "MMU unsyncs"),
+  ("",                    ""),
+  ("remote_tlb_flush",    "TLB flushes (remote)"),
+  ("invlpg",              "TLB entry invalidations (INVLPG)"),
+  ("tlb_flush",           "TLB flushes"),
+  ("",                    ""),
+  ("largepages",          "Large pages in use"),
+  ("pf_fixed",            "Fixed (non-paging) PTEs"),
+  ("pf_guest",            "Page faults injected"),
+  ("",                    ""),
+  ("host_state_reload",   "Host state reloads"),
+  ("efer_reload",         "EFER reloads"),
+  ("fpu_reload",          "FPU reloads"),
+  ("hypercalls",          "Hypervisor service calls"),
+  ("",                    ""),
+  ("insn_emulation",      "Emulated instructions"),
+  ("insn_emulation_fail", "Emulated instructions (failed)"),
+]
+
+def read_kvm_counter(name):
+  with open('/sys/kernel/debug/kvm/%s' % (name), 'r') as f:
+    value = f.read()
+  return int(value)
+
+def print_counter(value, description):
+  print("%15d      %s" % (value, description))
+
+print("  Virtualization stats")
+
+print("\n  Host\n")
+
+def parse_proc_stat():
+  stat = dict()
+  with open('/proc/stat', 'r') as f:
+    for line in f:
+      tokens = line.split()
+      key = tokens.pop(0)
+      stat[key] = tokens
+  return stat
+
+stat = parse_proc_stat()
+
+def parse_proc_vmstat():
+  stat = dict()
+  with open('/proc/vmstat', 'r') as f:
+    for line in f:
+      tokens = line.split()
+      stat[tokens[0]] = tokens[1]
+  return stat
+
+vmstat = parse_proc_vmstat()
+
+print_counter(int(vmstat["pgfault"]), "Page faults")
+print_counter(int(stat["intr"][0]), "Interrupts")
+print_counter(int(stat["ctxt"][0]), "Context switches")
+
+print("\n  KVM\n")
+
+for counter in KVM_COUNTERS:
+  name, description = counter
+  if (name):
+      value = read_kvm_counter(name)
+      print_counter(value, description)
+  else:
+      print("")
