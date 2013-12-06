@@ -104,6 +104,26 @@ for key in diskstats.keys():
   if diskstat[1] == "0":
     print_counter(int(diskstat[9]), "I/O sectors written (%s)" % (key))
 
+def parse_proc_netstats():
+  netstats = dict()
+  with open('/proc/net/dev', 'r') as f:
+    for line in f:
+      tokens = line.split(':')
+      if (len(tokens) == 2):
+        key = tokens[0].strip()
+        netstats[key] = tokens[1].split()
+  return netstats
+
+netstats = parse_proc_netstats()
+
+for key in sorted(netstats.keys()):
+  netstat = netstats[key]
+  print_counter(int(netstat[0]), "RX bytes (%s)" % (key))
+
+for key in netstats.keys():
+  netstat = netstats[key]
+  print_counter(int(netstat[8]), "TX bytes (%s)" % (key))
+
 print("\n  KVM\n")
 
 for counter in KVM_COUNTERS:
