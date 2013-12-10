@@ -242,7 +242,8 @@ def print_diff(prev_samples, new_samples):
     else:
       desc = '%-40s' % (key.measurable.description)
 
-    print_counter(desc, dval)
+    if (dval > 0):
+        print_counter(desc, dval)
 
 
 if __name__ == "__main__":
